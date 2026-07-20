@@ -89,9 +89,18 @@ internal class Orchestrator
         _cancellationTokenSource = null;
     }
 
-    private IEnumerable<string> WalkTree(string basePath, CancellationToken ct)
+    private static IEnumerable<string> WalkTree(string basePath, CancellationToken ct)
     {
-        throw new NotImplementedException();
+        foreach (var filePath in Directory.EnumerateFiles(basePath, "*", SearchOption.AllDirectories))
+        {
+            ct.ThrowIfCancellationRequested();
+
+            // A single MoveNext() call can be slow (slow network share) and nothing inside it checks the token
+            // (it's an old, pre-async API). There's no way to interrupt the inner operation.
+            // Ctrl+C wouldn't take effect until that one slow OS call finishes and control returns to your foreach.
+            // This is a real limitation of the API, not something fixable by adding a check or code-arounds.
+            yield return filePath;
+        }
     }
 
     private void LogSuccess(string relativeFilePath, CancellationToken ct)
