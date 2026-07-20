@@ -7,6 +7,11 @@ internal class Orchestrator
     private readonly string DestinationPath = "D:\\";
     private readonly int MaxDegreeOfParallelism = 4;
 
+    private readonly static Lock _printLock = new();
+
+    private int _successCount = 0;
+    private int _errorCount = 0;
+
     private ConsoleCancelEventHandler? _consoleCancelEventHandler;
     private CancellationTokenSource? _cancellationTokenSource;
 
@@ -29,7 +34,7 @@ internal class Orchestrator
                 {
                     var copyWorker = new CopyWorker();
                     await copyWorker.CopyFileAsync(relativeFilePath, SourcePath, DestinationPath, iterationToken);
-                    LogSuccess(relativeFilePath, iterationToken);
+                    LogSuccess(relativeFilePath);
                 }
                 catch (OperationCanceledException)
                 {
@@ -37,11 +42,11 @@ internal class Orchestrator
                 }
                 catch (FileCopyFailedException ex)
                 {
-                    LogError(relativeFilePath, ex, iterationToken);
+                    LogError(relativeFilePath, ex);
                 }
                 catch (Exception ex)
                 {
-                    LogError(relativeFilePath, ex, iterationToken);
+                    LogError(relativeFilePath, ex);
                     throw;
                 }
             });
@@ -103,13 +108,22 @@ internal class Orchestrator
         }
     }
 
-    private void LogSuccess(string relativeFilePath, CancellationToken ct)
+    private void LogSuccess(string relativeFilePath)
     {
-        throw new NotImplementedException();
+        lock (_printLock)
+        {
+            _successCount++;
+            Console.WriteLine($"[OK] File {_successCount} copied from: {relativeFilePath}");
+        }
     }
 
-    private void LogError(string relativeFilePath, Exception ex, CancellationToken ct)
+    private void LogError(string relativeFilePath, Exception ex)
     {
-        throw new NotImplementedException();
+        lock (_printLock)
+        {
+            _errorCount++;
+            Console.WriteLine($"[FAIL] Total errors: {_errorCount}, file: {relativeFilePath}");
+            Console.WriteLine($"Underlying exception: {ex.Message}");
+        }
     }
 }
