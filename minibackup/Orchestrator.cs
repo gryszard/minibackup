@@ -142,7 +142,7 @@ internal class Orchestrator
         lock (_printLock)
         {
             _errorCount++;
-            Console.WriteLine($"[FAIL] Total errors: {_errorCount}, file: {relativeFilePath}");
+            Console.Write($"[FAIL] {relativeFilePath} | Error count: {_errorCount} | ");
 
             var current = ex;
             var depth = 0;
@@ -156,9 +156,8 @@ internal class Orchestrator
             while (current is not null)
             {
                 var prefix = depth == 0 ? "Exception" : $"Inner exception (depth {depth})";
-                Console.WriteLine($"{prefix}: {current.GetType().Name}, HResult: 0x{current.HResult:X8}, message: {current.Message}");
-                Console.WriteLine($"Stack trace: {current.StackTrace}");
-                Console.WriteLine();
+                Console.Write($"{prefix}: {current.GetType().Name} | HResult: 0x{current.HResult:X8} | {current.Message} | ");
+                Console.WriteLine($"Stack trace: {current.StackTrace?.Replace(Environment.NewLine, " ")}");
 
                 current = current.InnerException;
                 depth++;
