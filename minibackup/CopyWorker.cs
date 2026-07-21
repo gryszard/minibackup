@@ -29,21 +29,21 @@ internal class CopyWorker
             using (var destinationStream = new FileStream(destinationTempFilePath, FileMode.CreateNew, FileAccess.Write))
             {
                 copyResult = await CopyToWithRetryAsync(sourceStream, destinationStream, ct);
+            }
 
-                if (!copyResult.IsSuccess)
-                {
-                    throw new FileCopyFailedException("File copy failed", copyResult.Error);
-                }
+            if (!copyResult.IsSuccess)
+            {
+                throw new FileCopyFailedException("File copy failed", copyResult.Error);
+            }
 
-                try
-                {
-                    File.Move(destinationTempFilePath, destinationFilePath);
-                    operationSucceeded = true;
-                }
-                catch (IOException ex)
-                {
-                    throw new FileCopyFailedException("Cannot move temporary file into final path", ex);
-                }
+            try
+            {
+                File.Move(destinationTempFilePath, destinationFilePath);
+                operationSucceeded = true;
+            }
+            catch (IOException ex)
+            {
+                throw new FileCopyFailedException("Cannot move temporary file into final path", ex);
             }
         }
         catch (OperationCanceledException)
