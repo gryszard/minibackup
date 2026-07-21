@@ -3,8 +3,8 @@
 internal class Orchestrator
 {
     // TODO: To be configured externally.
-    private readonly string SourcePath = "C:\\";
-    private readonly string DestinationPath = "D:\\";
+    private readonly string SourcePath;
+    private readonly string DestinationPath;
     private readonly int MaxDegreeOfParallelism = 4;
 
     private readonly static Lock _printLock = new();
@@ -15,10 +15,18 @@ internal class Orchestrator
     private ConsoleCancelEventHandler? _consoleCancelEventHandler;
     private CancellationTokenSource? _cancellationTokenSource;
 
-    public async Task Run()
+    public Orchestrator(string sourcePath, string destinationPath)
+    {
+        SourcePath = sourcePath;
+        DestinationPath = destinationPath;
+    }
+
+    public async Task RunAsync()
     {
         try
         {
+            LogInfo($"RunAsync started with source: {SourcePath} and destination: {DestinationPath}");
+
             var cancellationToken = WireCancellationTokenToConsole();
 
             var relativeFilePathsToCopy = WalkTree(SourcePath, cancellationToken);
@@ -32,6 +40,8 @@ internal class Orchestrator
             {
                 try
                 {
+                    LogInfo($"Trying to copy file {relativeFilePath}");
+
                     var copyWorker = new CopyWorker();
                     await copyWorker.CopyFileAsync(relativeFilePath, SourcePath, DestinationPath, iterationToken);
                     LogSuccess(relativeFilePath);
@@ -100,11 +110,21 @@ internal class Orchestrator
         {
             ct.ThrowIfCancellationRequested();
 
+            var relativeFilePath = Path.GetRelativePath(basePath, filePath);
+
             // A single MoveNext() call can be slow (slow network share) and nothing inside it checks the token
             // (it's an old, pre-async API). There's no way to interrupt the inner operation.
             // Ctrl+C wouldn't take effect until that one slow OS call finishes and control returns to your foreach.
             // This is a real limitation of the API, not something fixable by adding a check or code-arounds.
-            yield return filePath;
+            yield return relativeFilePath;
+        }
+    }
+
+    private static void LogInfo(string message)
+    {
+        lock (_printLock)
+        {
+            Console.WriteLine($"[INFO] {message}");
         }
     }
 
@@ -123,7 +143,26 @@ internal class Orchestrator
         {
             _errorCount++;
             Console.WriteLine($"[FAIL] Total errors: {_errorCount}, file: {relativeFilePath}");
-            Console.WriteLine($"Underlying exception: {ex.Message}");
+
+            var current = ex;
+            var depth = 0;
+
+            // Exception.ToString() is overridden to produce a rich, multi-line block that already includes:
+            // the fully-qualified exception type name, the message, the full stack trace,
+            // and it recursively walks InnerException for you, prefixing each with "---> "
+            // However, Exception.ToString() doesn't include HResult in the default output
+            // — so if we switch to Console.WriteLine(ex), we'd lose the exact piece of info
+            // added for retry-classification debugging (checking if the IOException is transient).
+            while (current is not null)
+            {
+                var prefix = depth == 0 ? "Exception" : $"Inner exception (depth {depth})";
+                Console.WriteLine($"{prefix}: {current.GetType().Name}, HResult: 0x{current.HResult:X8}, message: {current.Message}");
+                Console.WriteLine($"Stack trace: {current.StackTrace}");
+                Console.WriteLine();
+
+                current = current.InnerException;
+                depth++;
+            }
         }
     }
 }
