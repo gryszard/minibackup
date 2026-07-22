@@ -3,7 +3,16 @@
 //var (sourcePath, destinationPath) = GetCLIArgs(args);
 var (sourcePath, destinationPath) = ("C:\\Users\\Ryszard\\temp\\src", "C:\\Users\\Ryszard\\temp\\dest");
 var orchestrator = new Orchestrator(sourcePath, destinationPath);
-await orchestrator.RunAsync();
+
+try
+{
+    await orchestrator.RunAsync();
+}
+catch (Exception ex)
+{
+    Console.WriteLine("[FATAL] Unexpected error ocurred. See the details below.");
+    Console.WriteLine(ex);
+}
 
 static (string SourcePath, string DestinationPath) GetCLIArgs(string[] args)
 {
