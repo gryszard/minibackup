@@ -15,12 +15,6 @@ catch (Exception ex)
 
 static (string SourcePath, string DestinationPath) GetCLIArgs(string[] args)
 {
-    if (args.Length == 0)
-    {
-        Console.WriteLine("[INFO] No arguments provided, using the default paths.");
-        return ("C:\\Users\\Ryszard\\temp\\src", "C:\\Users\\Ryszard\\temp\\dest");
-    }
-
     if (args.Length != 2)
     {
         throw new InvalidOperationException("Program requires exactly two arguments: minibackup SourcePath DestinationPath");
