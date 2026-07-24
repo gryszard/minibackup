@@ -15,9 +15,9 @@ function Create-RandomFile {
   $rng = New-Object System.Random
   $buffer = New-Object byte[] ($chunkSize)
   
+  $stream = [System.IO.File]::Create($Name)
+  
   try {
-    $stream = [System.IO.File]::Create($Name)
-
     for ($i = 0; $i -lt $Chunks; $i++) {
       $rng.NextBytes($buffer)
       $stream.Write($buffer, 0, $buffer.Length)

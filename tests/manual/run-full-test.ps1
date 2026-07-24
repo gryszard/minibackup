@@ -1,9 +1,4 @@
-﻿<#
-.EXAMPLE
-    .\test-happy-path.ps1 -SourcePath "E:\copy" -DestinationPath "F:\copy" -DirWithExe "C:\Users\Ryszard\Desktop\net10.0"
-#>
-
-param(
+﻿param(
     [Parameter(Mandatory = $true)]
     [string]$SourcePath,
 
@@ -34,9 +29,8 @@ if (-not (Test-DirectoryEmpty -Path $DestinationPath)) {
   throw "Destination directory not empty. Cannot perform test."
 }
 
-.\utils\create-test-files.ps1 -SourcePath $SourcePath
+.\utils\generate-test-data.ps1 -SourcePath $SourcePath
 
-Write-Host "Running backup program..."
-& "$($DirWithExe)\minibackup.exe" $SourcePath $DestinationPath > "$($DirWithExe)\result.txt"
+.\utils\run-backup.ps1 -SourcePath $SourcePath -DestinationPath $DestinationPath -PathToExe "$($DirWithExe)\minibackup.exe" -PathToLogFile "$($DirWithExe)\result.txt"
 
 .\utils\verify-backup.ps1 -SourcePath $SourcePath -DestinationPath $DestinationPath
