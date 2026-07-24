@@ -29,8 +29,8 @@ if (-not (Test-DirectoryEmpty -Path $DestinationPath)) {
   throw "Destination directory not empty. Cannot perform test."
 }
 
-.\utils\generate-test-data.ps1 -SourcePath $SourcePath
+& "$PSScriptRoot\utils\generate-test-data.ps1" -SourcePath $SourcePath
 
-.\utils\run-backup.ps1 -SourcePath $SourcePath -DestinationPath $DestinationPath -PathToExe "$($DirWithExe)\minibackup.exe" -PathToLogFile "$($DirWithExe)\result.txt"
+& "$PSScriptRoot\utils\run-backup.ps1" -SourcePath $SourcePath -DestinationPath $DestinationPath -PathToExe "$($DirWithExe)\minibackup.exe" -PathToLogFile "$($DirWithExe)\result.txt"
 
-.\utils\verify-backup.ps1 -SourcePath $SourcePath -DestinationPath $DestinationPath
+& "$PSScriptRoot\utils\verify-backup.ps1" -SourcePath $SourcePath -DestinationPath $DestinationPath
